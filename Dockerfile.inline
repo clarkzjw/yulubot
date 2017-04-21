@@ -1,5 +1,0 @@
-FROM python:2
-
-ADD inline.py
-
-CMD [python2, inline.py]
