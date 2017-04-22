@@ -4,14 +4,12 @@
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import logging
-import json
+
+from db import Quote, config
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 LOG = logging.getLogger(__name__)
-
-TOKEN = None
-CHANNEL_URL = None
 
 
 def start(bot, update):
@@ -27,9 +25,6 @@ def echo(bot, update):
     update_id = update["update_id"]
 
     if update_id and channel_post:
-        LOG.info("This is a channel post")
-        LOG.info(channel_post)
-
         forward_date = channel_post["forward_date"]
         forward_from = {}
         forward_from_chat = {}
@@ -45,7 +40,6 @@ def echo(bot, update):
         original_user_nickname = None
 
         if forward_date and message_id:
-            LOG.info("This is a forward message")
             text = channel_post["text"] # 原文
             if forward_from:
                 original_user = channel_post["forward_from"] # 原始用户
@@ -58,33 +52,24 @@ def echo(bot, update):
                 original_user_username = original_user["username"]
                 original_user_nickname = original_user["title"]
 
-            url = CHANNEL_URL + str(message_id)
-
-            LOG.info(forward_date)
-            LOG.info(update_id)
-            LOG.info(text)
-            LOG.info(original_user_id)
-            LOG.info(original_user_username)
-            LOG.info(original_user_nickname)
-            LOG.info(CHANNEL_URL + str(message_id))
+            url = config.CHANNEL_URL + str(message_id)
+            quote = Quote(id=update_id,
+                          fwd_date=forward_date,
+                          text=text,
+                          ori_user_id=original_user_id,
+                          ori_user_username=original_user_username,
+                          ori_user_nickname=original_user_nickname,
+                          url=url)
+            quote.display()
+            quote.insert()
 
 
 def error(bot, update, error):
     LOG.warn('Update "%s" caused error "%s"' % (update, error))
 
 
-def read_config():
-    global TOKEN
-    global CHANNEL_URL
-    config = open("./config.json")
-    config = json.load(config)
-    TOKEN = config["TOKEN"]
-    CHANNEL_URL = config["CHANNEL_URL"]
-
-
 def main():
-    read_config()
-    updater = Updater(TOKEN)
+    updater = Updater(config.TOKEN)
 
     dp = updater.dispatcher
 
