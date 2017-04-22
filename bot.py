@@ -23,6 +23,7 @@ def help(bot, update):
 def echo(bot, update):
     channel_post = update["channel_post"]
     update_id = update["update_id"]
+    LOG.info(update)
 
     if update_id and channel_post:
         forward_date = channel_post["forward_date"]
