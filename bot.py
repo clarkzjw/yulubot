@@ -5,7 +5,7 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import logging
 
-from db import Quote, config
+from db import Quote, config, query_yulu_by_text, query_yulu_by_username
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -18,6 +18,45 @@ def start(bot, update):
 
 def help(bot, update):
     update.message.reply_text('Help!')
+
+
+def listme(bot, update):
+    LOG.info(update)
+    is_bot_cmd = update["message"]["entities"][0]["type"]
+    if is_bot_cmd == "bot_command":
+        username = update["message"]["from_user"]["username"]
+        count, yulus = query_yulu_by_username(username)
+        if count > 0:
+            update.message.reply_text("你有 %s 条语录，如下：" % count)
+            update.message.reply_text(yulus)
+
+        else:
+            update.message.reply_text("你没有语录！")
+
+
+def forward_message(bot, chat_id, from_chat_id, disable_notification, message_id):
+    bot.forwardMessage(chat_id=chat_id,
+                       from_chat_id=from_chat_id,
+                       disable_notification=disable_notification,
+                       message_id=message_id)
+
+
+def search(bot, update):
+    LOG.info(update)
+    is_bot_cmd = update["message"]["entities"][0]["type"]
+    target_id = update["message"]["from_user"]["id"]
+    if is_bot_cmd == "bot_command":
+        text = update["message"]["text"][8:]
+        results = query_yulu_by_text(text)
+        if results is not None:
+            LOG.info(results)
+            for result in results:
+                if "ingayressHZ" in result:
+                    forward_message(bot, target_id, "@ingayressHZ", False, result[25:])
+                elif "ingayssHZ" in result:
+                    forward_message(bot, target_id, "@ingayssHZ", False, result[23:])
+        else:
+            update.message.reply_text("No result")
 
 
 def echo(bot, update):
@@ -76,6 +115,8 @@ def main():
 
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help))
+    dp.add_handler(CommandHandler("search", search))
+    dp.add_handler(CommandHandler("list", listme))
 
     dp.add_handler(MessageHandler(Filters.text, echo))
 

@@ -55,3 +55,34 @@ class Quote:
                 "url": self.url}
         collection.insert(post)
         conn.close()
+
+
+def query_yulu_by_text(text):
+    uri = config.MONGO_URI
+    conn = MongoClient(uri)
+    database = conn[config.DB_NAME]
+    collection = database.entries
+    yulus = collection.find({"text": text})
+    result = []
+    if yulus.count() > 0:
+        for yulu in yulus:
+            LOG.info(yulu)
+            result.append(yulu["url"])
+
+    return result
+
+
+def query_yulu_by_username(username):
+    uri = config.MONGO_URI
+    conn = MongoClient(uri)
+    database = conn[config.DB_NAME]
+    collection = database.entries
+    yulus = collection.find({"ori_user_username": username})
+    count = yulus.count()
+    result = []
+    if count > 0:
+        for yulu in yulus:
+            LOG.info(yulu)
+            result.append(yulu["url"])
+
+    return count, result
