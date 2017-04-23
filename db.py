@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 import logging
 import json
+import os
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -11,10 +12,10 @@ class Config:
     def __init__(self):
         c = open("./config.json")
         c = json.load(c)
-        self.TOKEN = c["TOKEN"]
-        self.CHANNEL_URL = c["CHANNEL_URL"]
-        self.MONGO_URI = c["MONGO_URI"]
-        self.DB_NAME = c["DB_NAME"]
+        self.TOKEN = os.getenv("TOKEN", None)
+        self.CHANNEL_URL = os.getenv("CHANNEL_URL", None)
+        self.MONGO_URI = os.getenv("MONGO_URI", None)
+        self.DB_NAME = os.getenv("DB_NAME", None)
 
 config = Config()
 
