@@ -1,6 +1,5 @@
 from pymongo import MongoClient
 import logging
-import json
 import os
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -10,8 +9,6 @@ LOG = logging.getLogger(__name__)
 
 class Config:
     def __init__(self):
-        c = open("./config.json")
-        c = json.load(c)
         self.TOKEN = os.getenv("TOKEN", None)
         self.CHANNEL_URL = os.getenv("CHANNEL_URL", None)
         self.MONGO_URI = os.getenv("MONGO_URI", None)
