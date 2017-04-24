@@ -5,7 +5,7 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import logging
 
-from db import Quote, config, query_yulu_by_text, query_yulu_by_username
+from db import Quote, config, query_yulu_by_text, query_yulu_by_username, query_yulu_by_keyword
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -56,6 +56,27 @@ def search(bot, update):
                 elif "ingayssHZ" in result:
                     forward_message(bot, target_id, "@ingayssHZ", False, result[23:])
         else:
+            update.message.reply_text("No result")
+
+
+def search_by_keyword(bot, update):
+    LOG.info(update)
+    is_bot_cmd = update["message"]["entities"][0]["type"]
+    target_id = update["message"]["from_user"]["id"]
+    if is_bot_cmd == "bot_command":
+        text = update["message"]["text"][8:]
+        results = query_yulu_by_keyword(text)
+        total = results["hits"]["total"]
+        hits = results["hits"]["hits"]
+        if total > 0:
+            update.message.reply_text("共有 %s 条语录，分别是" % (total))
+            for hit in hits:
+                result = hit["_source"]["url"]
+                if "ingayressHZ" in result:
+                    forward_message(bot, target_id, "@ingayressHZ", False, result[25:])
+                elif "ingayssHZ" in result:
+                    forward_message(bot, target_id, "@ingayssHZ", False, result[23:])
+        elif total == 0:
             update.message.reply_text("No result")
 
 
@@ -115,7 +136,7 @@ def main():
 
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help))
-    dp.add_handler(CommandHandler("search", search))
+    dp.add_handler(CommandHandler("search", search_by_keyword))
     dp.add_handler(CommandHandler("list", listme))
 
     dp.add_handler(MessageHandler(Filters.text, echo))

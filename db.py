@@ -13,6 +13,7 @@ class Config:
         self.CHANNEL_URL = os.getenv("CHANNEL_URL", None)
         self.MONGO_URI = os.getenv("MONGO_URI", None)
         self.DB_NAME = os.getenv("DB_NAME", None)
+        self.ES_URL = os.getenv("ES_URL", None)
 
 config = Config()
 
@@ -70,6 +71,28 @@ def query_yulu_by_text(text):
             result.append(yulu["url"])
 
     return result
+
+
+def query_yulu_by_keyword(text):
+    from elasticsearch import Elasticsearch
+    es = Elasticsearch(config.ES_URL)
+    body = {
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "match_phrase": {
+                            "text": text
+                        }
+                    }
+                ]
+            }
+        }
+    }
+
+    res = es.search(index=config.DB_NAME, doc_type="entries", body=body)
+    LOG.info(res)
+    return res
 
 
 def query_yulu_by_username(username):
