@@ -10,7 +10,8 @@ RUN \
 
 RUN \
   pip3 install pymongo && \
-  pip3 install python-telegram-bot
+  pip3 install python-telegram-bot && \
+  pip3 install -r requirements.txt
 
 COPY . /usr/app
 WORKDIR /usr/app
