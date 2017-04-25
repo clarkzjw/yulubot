@@ -77,6 +77,7 @@ def query_yulu_by_keyword(text):
     from elasticsearch import Elasticsearch
     es = Elasticsearch(config.ES_URL)
     body = {
+        "from": 0, "size": 100,
         "query": {
             "bool": {
                 "must": [
