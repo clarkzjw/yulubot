@@ -9,10 +9,9 @@ from datadog import ThreadStats
 from datadog import initialize
 
 import logging
-import logging.config
-import loggly.handlers
 
-logging.config.fileConfig('log.conf')
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
 LOG = logging.getLogger(__name__)
 
 options = {
