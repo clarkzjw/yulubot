@@ -1,64 +1,49 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-import logging
 from elasticsearch import ConnectionTimeout
-from db import Quote, config, query_yulu_by_text, query_yulu_by_username, query_yulu_by_keyword
+from db import Quote, config, query_yulu_by_username, query_yulu_by_keyword
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+from datadog import ThreadStats
+from datadog import initialize
+
+import logging
+import logging.config
+import loggly.handlers
+
+logging.config.fileConfig('log.conf')
 LOG = logging.getLogger(__name__)
+
+options = {
+        'api_key': 'e5fc241bb08a9ae8b092765e8cda629b',
+        'app_key': 'cf2f3096de4b7c607c67836c0f3680b5f9bb2209'
+}
+
+initialize(**options)
+stats = ThreadStats()
+stats.start()
 
 
 def start(bot, update):
-    update.message.reply_text('Hi!')
-
-
-def help(bot, update):
-    update.message.reply_text('Help!')
-
-
-def listme(bot, update):
-    LOG.info(update)
-    is_bot_cmd = update["message"]["entities"][0]["type"]
-    if is_bot_cmd == "bot_command":
-        username = update["message"]["from_user"]["username"]
-        count, yulus = query_yulu_by_username(username)
-        if count > 0:
-            update.message.reply_text(u"你有 %s 条语录，如下：" % count)
-            update.message.reply_text(yulus)
-        else:
-            update.message.reply_text(u"你没有语录！")
+    stats.increment('start')
+    LOG.info("start")
+    update.message.reply_text(u"坚持一个高层的原则绝不动摇！")
 
 
 def forward_message(bot, chat_id, from_chat_id, disable_notification, message_id):
+    stats.increment('forward_message')
+    LOG.info("forward_message")
     bot.forwardMessage(chat_id=chat_id,
                        from_chat_id=from_chat_id,
                        disable_notification=disable_notification,
                        message_id=message_id)
 
 
-def search(bot, update):
-    LOG.info(update)
-    is_bot_cmd = update["message"]["entities"][0]["type"]
-    target_id = update["message"]["from_user"]["id"]
-    if is_bot_cmd == "bot_command":
-        text = update["message"]["text"][8:]
-        results = query_yulu_by_text(text)
-        if results is not None:
-            LOG.info(results)
-            for result in results:
-                if "ingayressHZ" in result:
-                    forward_message(bot, target_id, "@ingayressHZ", False, result[25:])
-                elif "ingayssHZ" in result:
-                    forward_message(bot, target_id, "@ingayssHZ", False, result[23:])
-        else:
-            update.message.reply_text("No result")
-
-
 def search_by_keyword(bot, update):
+    stats.increment('search_by_keyword')
+    LOG.info("search_by_keyword")
+
     LOG.info(update)
     is_bot_cmd = update["message"]["entities"][0]["type"]
     target_id = update["message"]["from_user"]["id"]
@@ -73,6 +58,7 @@ def search_by_keyword(bot, update):
             target_id = update["message"]["chat"]["id"]
         try:
             results = query_yulu_by_keyword(text)
+            stats.increment('keyword.%s' % text)
             total = results["hits"]["total"]
             hits = results["hits"]["hits"]
             if total > 0:
@@ -86,11 +72,14 @@ def search_by_keyword(bot, update):
             elif total == 0:
                 update.message.reply_text(u"No result")
         except ConnectionTimeout:
+            LOG.error("ConnectionTimeout")
             update.message.reply_text(u"查询超时")
 
 
 def search_by_people(bot, update):
+    stats.increment('search_by_people')
     LOG.info(update)
+
     is_bot_cmd = update["message"]["entities"][0]["type"]
     target_id = update["message"]["from_user"]["id"]
     message_type = update["message"]["chat"]["type"]
@@ -105,6 +94,7 @@ def search_by_people(bot, update):
         if username == "":
             username = update["message"]["from_user"]["username"]
 
+        stats.increment('username.%s' % username)
         count, yulus = query_yulu_by_username(username)
         if count > 0:
             bot.sendMessage(target_id, u"%s 有 %s 条语录，如下：" % (username, count))
@@ -114,9 +104,10 @@ def search_by_people(bot, update):
 
 
 def echo(bot, update):
+    stats.increment("echo")
+    
     channel_post = update["channel_post"]
     update_id = update["update_id"]
-    LOG.info(update)
 
     if update_id and channel_post:
         forward_date = channel_post["forward_date"]
@@ -162,6 +153,7 @@ def echo(bot, update):
 
 
 def error(bot, update, error):
+    stats.increment("error")
     LOG.warn('Update "%s" caused error "%s"' % (update, error))
 
 
@@ -171,7 +163,6 @@ def main():
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("search", search_by_keyword))
     dp.add_handler(CommandHandler("list", search_by_people))
 
@@ -184,5 +175,5 @@ def main():
 
 
 if __name__ == '__main__':
-    LOG.info("Start")
+    LOG.info("Start...")
     main()

@@ -1,1 +1,5 @@
 elasticsearch>=5.0.0,<6.0.0
+datadog
+python-telegram-bot
+pymongo
+loggly-python-handler
