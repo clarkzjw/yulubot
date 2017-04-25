@@ -15,5 +15,5 @@ RUN \
   pip3 install -r requirements.txt
 
 
-CMD python /usr/app/bot.py
+CMD python3 /usr/app/bot.py
 
