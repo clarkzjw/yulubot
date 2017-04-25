@@ -63,8 +63,14 @@ def search_by_keyword(bot, update):
     LOG.info(update)
     is_bot_cmd = update["message"]["entities"][0]["type"]
     target_id = update["message"]["from_user"]["id"]
+    message_type = update["message"]["chat"]["type"]
     if is_bot_cmd == "bot_command":
-        text = update["message"]["text"][8:]
+        text = ""
+        offset = update["message"]["entities"][0]["length"] + 1
+        if message_type == "private":
+            text = update["message"]["text"][offset:]
+        elif message_type == "group":
+            text = update["message"]["text"][offset:]
         results = query_yulu_by_keyword(text)
         total = results["hits"]["total"]
         hits = results["hits"]["hits"]
