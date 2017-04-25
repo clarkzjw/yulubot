@@ -107,5 +107,11 @@ def query_yulu_by_username(username):
         for yulu in yulus:
             LOG.info(yulu)
             result.append(yulu["url"])
-
+    elif count == 0:
+        pass
     return count, result
+
+
+def query_similar_username(username):
+
+    pass

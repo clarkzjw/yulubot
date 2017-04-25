@@ -4,7 +4,7 @@
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import logging
-
+from elasticsearch import ConnectionTimeout
 from db import Quote, config, query_yulu_by_text, query_yulu_by_username, query_yulu_by_keyword
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -27,11 +27,10 @@ def listme(bot, update):
         username = update["message"]["from_user"]["username"]
         count, yulus = query_yulu_by_username(username)
         if count > 0:
-            update.message.reply_text("你有 %s 条语录，如下：" % count)
+            update.message.reply_text(u"你有 %s 条语录，如下：" % count)
             update.message.reply_text(yulus)
-
         else:
-            update.message.reply_text("你没有语录！")
+            update.message.reply_text(u"你没有语录！")
 
 
 def forward_message(bot, chat_id, from_chat_id, disable_notification, message_id):
@@ -71,23 +70,26 @@ def search_by_keyword(bot, update):
             text = update["message"]["text"][offset:]
         elif message_type == "group":
             text = update["message"]["text"][offset:]
-        results = query_yulu_by_keyword(text)
-        total = results["hits"]["total"]
-        hits = results["hits"]["hits"]
-        if total > 0:
-            update.message.reply_text("共有 %s 条语录，分别是" % (total))
-            for hit in hits:
-                result = hit["_source"]["url"]
-                if "ingayressHZ" in result:
-                    forward_message(bot, target_id, "@ingayressHZ", False, result[25:])
-                elif "ingayssHZ" in result:
-                    forward_message(bot, target_id, "@ingayssHZ", False, result[23:])
-        elif total == 0:
-            update.message.reply_text("No result")
+            target_id = update["message"]["chat"]["id"]
+        try:
+            results = query_yulu_by_keyword(text)
+            total = results["hits"]["total"]
+            hits = results["hits"]["hits"]
+            if total > 0:
+                update.message.reply_text(u"共有 %s 条语录，分别是" % total)
+                for hit in hits:
+                    result = hit["_source"]["url"]
+                    if "ingayressHZ" in result:
+                        forward_message(bot, target_id, "@ingayressHZ", False, result[25:])
+                    elif "ingayssHZ" in result:
+                        forward_message(bot, target_id, "@ingayssHZ", False, result[23:])
+            elif total == 0:
+                update.message.reply_text(u"No result")
+        except ConnectionTimeout:
+            update.message.reply_text(u"查询超时")
 
 
 def search_by_people(bot, update):
-    LOG.info(update)
     LOG.info(update)
     is_bot_cmd = update["message"]["entities"][0]["type"]
     target_id = update["message"]["from_user"]["id"]
@@ -99,16 +101,16 @@ def search_by_people(bot, update):
             username = update["message"]["text"][offset:]
         elif message_type == "group":
             username = update["message"]["text"][offset:]
+            target_id = update["message"]["chat"]["id"]
         if username == "":
             username = update["message"]["from_user"]["username"]
 
         count, yulus = query_yulu_by_username(username)
         if count > 0:
-            update.message.reply_text("你有 %s 条语录，如下：" % count)
-            update.message.reply_text(yulus)
-
-        else:
-            update.message.reply_text("你没有语录！")
+            bot.sendMessage(target_id, u"%s 有 %s 条语录，如下：" % (username, count))
+            bot.sendMessage(target_id, yulus)
+        elif count == 0:
+            bot.sendMessage(target_id, u"用户名%s 不存在！" % username)
 
 
 def echo(bot, update):
@@ -124,7 +126,7 @@ def echo(bot, update):
             forward_from = channel_post["forward_from"]
             forward_from_chat = channel_post["forward_from_chat"]
         except KeyError:
-            LOG.error("Key error")
+            LOG.error(u"Key error")
 
         message_id = channel_post["message_id"]
         original_user_id = None
@@ -132,14 +134,17 @@ def echo(bot, update):
         original_user_nickname = None
 
         if forward_date and message_id:
-            text = channel_post["text"] # 原文
+            text = channel_post["text"]
+            # 原文
             if forward_from:
-                original_user = channel_post["forward_from"] # 原始用户
+                original_user = channel_post["forward_from"]
+                # 原始用户
                 original_user_id = original_user["id"]
                 original_user_username = original_user["username"]
                 original_user_nickname = original_user["first_name"] + original_user["last_name"]
             elif forward_from_chat:
-                original_user = channel_post["forward_from_chat"]  # 原始用户
+                original_user = channel_post["forward_from_chat"]
+                # 原始用户
                 original_user_id = original_user["id"]
                 original_user_username = original_user["username"]
                 original_user_nickname = original_user["title"]
