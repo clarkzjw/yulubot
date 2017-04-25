@@ -12,7 +12,7 @@ COPY . /usr/app
 WORKDIR /usr/app
 
 RUN \
-  pip3 install -U urllib3 && \
+  pip3 install python-telegram-bot && \
   pip3 install -r requirements.txt
 
 
