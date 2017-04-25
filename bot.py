@@ -86,6 +86,31 @@ def search_by_keyword(bot, update):
             update.message.reply_text("No result")
 
 
+def search_by_people(bot, update):
+    LOG.info(update)
+    LOG.info(update)
+    is_bot_cmd = update["message"]["entities"][0]["type"]
+    target_id = update["message"]["from_user"]["id"]
+    message_type = update["message"]["chat"]["type"]
+    if is_bot_cmd == "bot_command":
+        username = ""
+        offset = update["message"]["entities"][0]["length"] + 1
+        if message_type == "private":
+            username = update["message"]["text"][offset:]
+        elif message_type == "group":
+            username = update["message"]["text"][offset:]
+        if username == "":
+            username = update["message"]["from_user"]["username"]
+
+        count, yulus = query_yulu_by_username(username)
+        if count > 0:
+            update.message.reply_text("你有 %s 条语录，如下：" % count)
+            update.message.reply_text(yulus)
+
+        else:
+            update.message.reply_text("你没有语录！")
+
+
 def echo(bot, update):
     channel_post = update["channel_post"]
     update_id = update["update_id"]
@@ -143,7 +168,7 @@ def main():
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("search", search_by_keyword))
-    dp.add_handler(CommandHandler("list", listme))
+    dp.add_handler(CommandHandler("list", search_by_people))
 
     dp.add_handler(MessageHandler(Filters.text, echo))
 
