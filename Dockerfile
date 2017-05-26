@@ -1,20 +1,19 @@
-FROM ubuntu:16.04
+FROM python:3.6.0
 LABEL maintainer clarkzjw <clarkzjw@gmail.com>
 
 RUN \
-  sed -i 's/# \(.*multiverse$\)/\1/g' /etc/apt/sources.list && \
-  apt-get update && \
-  apt-get -y upgrade && \
-  apt-get install -y git wget build-essential python3 python3-dev python3-pip && \
-  rm -rf /var/lib/apt/lists/*
+    apt-get update && \
+    apt-get -y install vim
 
-COPY . /usr/app
-WORKDIR /usr/app
+WORKDIR /usr/src/app
+ENV PYTHONPATH /usr/src/app
+
+COPY requirements.txt /usr/src/app/requirements.txt
 
 RUN \
-  pip3 install python-telegram-bot && \
-  pip3 install -r requirements.txt
+    pip install python-telegram-bot && \
+    pip install -r requirements.txt
 
+COPY . /usr/src/app
 
-CMD python3 /usr/app/bot.py
-
+CMD "python3 /usr/src/app/bot.py"
