@@ -39,14 +39,19 @@ def insert_quote(quote):
 def query_yulu_by_keyword(text):
     with sqlalchemy_session() as session:
         yulus = session.query(Quote).filter(
-            Quote.text.like(text)
+            Quote.text.like("%"+text+"%")
         ).all()
         return yulus
 
 
 def query_yulu_by_username(username):
+    result = []
+    count = 0
     with sqlalchemy_session() as session:
         yulus = session.query(Quote).filter(
             Quote.ori_user_username==username
         ).all()
-        return yulus
+        count = len(yulus)
+        for yulu in yulus:
+            result.append(yulu.ori_url)
+    return count, result

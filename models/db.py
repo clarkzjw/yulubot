@@ -29,11 +29,12 @@ ACTION_BOT_INSERT_QUOTE = "action_bot_insert_quote"
 
 class Config:
     def __init__(self):
+        self.CHANNEL_URL = os.getenv("CHANNEL_URL", "https://t.me/ingayssHZ/")
         self.TOKEN = os.getenv("TOKEN", None)
         self.MYSQL_URI = os.getenv("MYSQL_URI", "mysql+pymysql://root:root@127.0.0.1:3306/quote_bot")
 
 config = Config()
-engine = create_engine(config.MYSQL_URI, echo=False, encoding="utf8", connect_args={'charset': 'utf8'})
+engine = create_engine(config.MYSQL_URI, echo=False, encoding="utf8", connect_args={'charset': 'utf8mb4'})
 Base.metadata.create_all(engine)
 
 
@@ -84,7 +85,7 @@ class Quote(Base):
 
     __tablename__ = "quote"
 
-    id = Column(String(255), primary_key=True, nullable=False)
+    id = Column(String(255), primary_key=True, nullable=False, default=lambda: str(uuid4()))
     fwd_date = Column(DOUBLE, nullable=False)
     text = Column(TEXT, nullable=False)
     ori_user_id = Column(String(255), nullable=False)

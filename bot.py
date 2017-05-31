@@ -10,6 +10,7 @@ from models.db import ACTION_BOT_START_BY_USER, ACTION_BOT_INSERT_QUOTE
 from utils import get_tg_user_from_update, add_action
 from utils import query_yulu_by_keyword, query_yulu_by_username, insert_quote
 
+from datetime import timezone
 import logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -51,20 +52,19 @@ def search_by_keyword(bot, update):
         try:
             results = query_yulu_by_keyword(text)
             add_action(user, ACTION_BOT_QUERY_BY_KEYWORD, comments=text)
-            total = results["hits"]["total"]
-            hits = results["hits"]["hits"]
+            total = len(results)
             if total > 0:
                 update.message.reply_text(u"共有 %s 条语录，分别是" % total)
-                for hit in hits:
-                    result = hit["_source"]["url"]
-                    if "ingayressHZ" in result:
-                        forward_message(bot, update, target_id, "@ingayressHZ", False, result[25:])
-                    elif "ingayssHZ" in result:
-                        forward_message(bot, update, target_id, "@ingayssHZ", False, result[23:])
+                for result in results:
+                    url = str(result.ori_url)
+                    if "ingayressHZ" in url:
+                        forward_message(bot, update, target_id, "@ingayressHZ", False, url[25:])
+                    elif "ingayssHZ" in url:
+                        forward_message(bot, update, target_id, "@ingayssHZ", False, url[23:])
             elif total == 0:
                 update.message.reply_text(u"No result")
-        except:
-            LOG.error("ConnectionTimeout")
+        except Exception as e:
+            LOG.error(e.message)
             update.message.reply_text(u"查询超时")
 
 
@@ -97,7 +97,6 @@ def search_by_people(bot, update):
 
 def echo(bot, update):
     LOG.info("echo")
-    user = get_tg_user_from_update(update)
 
     channel_post = update["channel_post"]
     update_id = update["update_id"]
@@ -120,12 +119,14 @@ def echo(bot, update):
         if forward_date and message_id:
             text = channel_post["text"]
             # 原文
+            original_user = None
             if forward_from:
                 original_user = channel_post["forward_from"]
                 # 原始用户
                 original_user_id = original_user["id"]
                 original_user_username = original_user["username"]
-                original_user_nickname = original_user["first_name"] + original_user["last_name"]
+                original_user_nickname = " ".join(x for x in [original_user["first_name"],
+                                                              original_user["last_name"]] if x is not None)
             elif forward_from_chat:
                 original_user = channel_post["forward_from_chat"]
                 # 原始用户
@@ -135,14 +136,13 @@ def echo(bot, update):
 
             url = config.CHANNEL_URL + str(message_id)
             quote = Quote(id=update_id,
-                          fwd_date=forward_date,
+                          fwd_date=forward_date.replace(tzinfo=timezone.utc).timestamp(),
                           text=text,
                           ori_user_id=original_user_id,
                           ori_user_username=original_user_username,
                           ori_user_nickname=original_user_nickname,
-                          url=url)
+                          ori_url=url)
             insert_quote(quote)
-            add_action(user, ACTION_BOT_INSERT_QUOTE, comments=original_user)
 
 
 def error(bot, update, error):
