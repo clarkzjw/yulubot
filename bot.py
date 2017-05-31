@@ -2,37 +2,32 @@
 # -*- coding: utf-8 -*-
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-from elasticsearch import ConnectionTimeout
-from db import Quote, config, query_yulu_by_username, query_yulu_by_keyword
+from models.db import Quote, config
 
-from datadog import ThreadStats
-from datadog import initialize
+from models.db import ACTION_BOT_FORWARD_MSG, ACTION_BOT_QUERY_BY_KEYWORD, ACTION_BOT_QUERY_BY_PEOPLE
+from models.db import ACTION_BOT_START_BY_USER, ACTION_BOT_INSERT_QUOTE
 
+from utils import get_tg_user_from_update, add_action
+from utils import query_yulu_by_keyword, query_yulu_by_username, insert_quote
+
+from datetime import timezone
 import logging
-
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 LOG = logging.getLogger(__name__)
 
-options = {
-        'api_key': 'e5fc241bb08a9ae8b092765e8cda629b',
-        'app_key': 'cf2f3096de4b7c607c67836c0f3680b5f9bb2209'
-}
-
-initialize(**options)
-stats = ThreadStats()
-stats.start()
-
 
 def start(bot, update):
-    stats.increment('start')
     LOG.info("start")
+    user = get_tg_user_from_update(update)
+    add_action(user, ACTION_BOT_START_BY_USER)
     update.message.reply_text(u"坚持一个高层的原则绝不动摇！")
 
 
-def forward_message(bot, chat_id, from_chat_id, disable_notification, message_id):
-    stats.increment('forward_message')
+def forward_message(bot, update, chat_id, from_chat_id, disable_notification, message_id):
     LOG.info("forward_message")
+    user = get_tg_user_from_update(update)
+    add_action(user, ACTION_BOT_FORWARD_MSG)
     bot.forwardMessage(chat_id=chat_id,
                        from_chat_id=from_chat_id,
                        disable_notification=disable_notification,
@@ -40,10 +35,9 @@ def forward_message(bot, chat_id, from_chat_id, disable_notification, message_id
 
 
 def search_by_keyword(bot, update):
-    stats.increment('search_by_keyword')
     LOG.info("search_by_keyword")
+    user = get_tg_user_from_update(update)
 
-    LOG.info(update)
     is_bot_cmd = update["message"]["entities"][0]["type"]
     target_id = update["message"]["from_user"]["id"]
     message_type = update["message"]["chat"]["type"]
@@ -57,27 +51,26 @@ def search_by_keyword(bot, update):
             target_id = update["message"]["chat"]["id"]
         try:
             results = query_yulu_by_keyword(text)
-            stats.increment('keyword.%s' % text)
-            total = results["hits"]["total"]
-            hits = results["hits"]["hits"]
+            add_action(user, ACTION_BOT_QUERY_BY_KEYWORD, comments=text)
+            total = len(results)
             if total > 0:
                 update.message.reply_text(u"共有 %s 条语录，分别是" % total)
-                for hit in hits:
-                    result = hit["_source"]["url"]
-                    if "ingayressHZ" in result:
-                        forward_message(bot, target_id, "@ingayressHZ", False, result[25:])
-                    elif "ingayssHZ" in result:
-                        forward_message(bot, target_id, "@ingayssHZ", False, result[23:])
+                for result in results:
+                    url = str(result.ori_url)
+                    if "ingayressHZ" in url:
+                        forward_message(bot, update, target_id, "@ingayressHZ", False, url[25:])
+                    elif "ingayssHZ" in url:
+                        forward_message(bot, update, target_id, "@ingayssHZ", False, url[23:])
             elif total == 0:
                 update.message.reply_text(u"No result")
-        except ConnectionTimeout:
-            LOG.error("ConnectionTimeout")
+        except Exception as e:
+            LOG.error(e.message)
             update.message.reply_text(u"查询超时")
 
 
 def search_by_people(bot, update):
-    stats.increment('search_by_people')
     LOG.info(update)
+    user = get_tg_user_from_update(update)
 
     is_bot_cmd = update["message"]["entities"][0]["type"]
     target_id = update["message"]["from_user"]["id"]
@@ -93,8 +86,8 @@ def search_by_people(bot, update):
         if username == "":
             username = update["message"]["from_user"]["username"]
 
-        stats.increment('username.%s' % username)
         count, yulus = query_yulu_by_username(username)
+        add_action(user, ACTION_BOT_QUERY_BY_PEOPLE, comments=username)
         if count > 0:
             bot.sendMessage(target_id, u"%s 有 %s 条语录，如下：" % (username, count))
             bot.sendMessage(target_id, yulus)
@@ -103,8 +96,8 @@ def search_by_people(bot, update):
 
 
 def echo(bot, update):
-    stats.increment("echo")
-    
+    LOG.info("echo")
+
     channel_post = update["channel_post"]
     update_id = update["update_id"]
 
@@ -126,12 +119,14 @@ def echo(bot, update):
         if forward_date and message_id:
             text = channel_post["text"]
             # 原文
+            original_user = None
             if forward_from:
                 original_user = channel_post["forward_from"]
                 # 原始用户
                 original_user_id = original_user["id"]
                 original_user_username = original_user["username"]
-                original_user_nickname = original_user["first_name"] + original_user["last_name"]
+                original_user_nickname = " ".join(x for x in [original_user["first_name"],
+                                                              original_user["last_name"]] if x is not None)
             elif forward_from_chat:
                 original_user = channel_post["forward_from_chat"]
                 # 原始用户
@@ -141,18 +136,16 @@ def echo(bot, update):
 
             url = config.CHANNEL_URL + str(message_id)
             quote = Quote(id=update_id,
-                          fwd_date=forward_date,
+                          fwd_date=forward_date.replace(tzinfo=timezone.utc).timestamp(),
                           text=text,
                           ori_user_id=original_user_id,
                           ori_user_username=original_user_username,
                           ori_user_nickname=original_user_nickname,
-                          url=url)
-            quote.display()
-            quote.insert()
+                          ori_url=url)
+            insert_quote(quote)
 
 
 def error(bot, update, error):
-    stats.increment("error")
     LOG.warn('Update "%s" caused error "%s"' % (update, error))
 
 
