@@ -16,4 +16,4 @@ RUN \
 
 COPY . /usr/src/app
 
-CMD "python3 /usr/src/app/bot.py"
+CMD "python3" "/usr/src/app/bot.py"

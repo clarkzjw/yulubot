@@ -69,7 +69,7 @@ def search_by_keyword(bot, update):
 
 
 def search_by_people(bot, update):
-    LOG.info(update)
+    LOG.info("search_by_people")
     user = get_tg_user_from_update(update)
 
     is_bot_cmd = update["message"]["entities"][0]["type"]

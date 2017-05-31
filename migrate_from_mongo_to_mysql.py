@@ -9,6 +9,7 @@ from models.db import sqlalchemy_session
 from models.db import ACTION_BOT_FORWARD_MSG, ACTION_BOT_QUERY_BY_KEYWORD, ACTION_BOT_QUERY_BY_PEOPLE
 from models.db import ACTION_BOT_START_BY_USER, ACTION_BOT_INSERT_QUOTE
 
+from models.db import create_db
 from utils import get_tg_user_from_update, add_action
 from utils import query_yulu_by_keyword, query_yulu_by_username, insert_quote
 
@@ -42,4 +43,5 @@ def migrate_from_mongo_to_mysql():
 
 
 if __name__ == "__main__":
+    create_db()
     migrate_from_mongo_to_mysql()

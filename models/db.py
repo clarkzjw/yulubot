@@ -52,6 +52,11 @@ def sqlalchemy_session():
         session.close()
 
 
+def create_db():
+    engine = create_engine(config.MYSQL_URI, echo=False, encoding="utf8", connect_args={'charset': 'utf8mb4'})
+    Base.metadata.create_all(engine)
+
+
 class Info(Base):
 
     __tablename__ = "info"
