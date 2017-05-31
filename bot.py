@@ -4,8 +4,8 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from models.db import Quote, config
 
-from models.db import ACTION_BOT_FORWARD_MSG, ACTION_BOT_QUERY_BY_KEYWORD, ACTION_BOT_QUERY_BY_PEOPLE
-from models.db import ACTION_BOT_START_BY_USER, ACTION_BOT_INSERT_QUOTE
+from models.db import ACTION_BOT_QUERY_BY_KEYWORD, ACTION_BOT_QUERY_BY_PEOPLE
+from models.db import ACTION_BOT_START_BY_USER
 
 from utils import get_tg_user_from_update, add_action
 from utils import query_yulu_by_keyword, query_yulu_by_username, insert_quote
@@ -26,8 +26,6 @@ def start(bot, update):
 
 def forward_message(bot, update, chat_id, from_chat_id, disable_notification, message_id):
     LOG.info("forward_message")
-    user = get_tg_user_from_update(update)
-    add_action(user, ACTION_BOT_FORWARD_MSG)
     bot.forwardMessage(chat_id=chat_id,
                        from_chat_id=from_chat_id,
                        disable_notification=disable_notification,
