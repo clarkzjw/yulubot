@@ -17,11 +17,28 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 LOG = logging.getLogger(__name__)
 
 
+first_use_text = u"""
+坚持一个高层的原则绝不动摇！
+
+现有如下功能：
+
+💫 关键字搜索：
+/search keyword 
+如：/search 你好，得到一条语录“你好变态啊！”；
+
+💫按被forward人搜索：
+/list username（不带@）
+如：/list MayGreen, 得到100多条语录；
+
+现不支持inline（后续可能支持）, 为了不让消息爆炸（可能搜到100条消息），暂不建议添加至群组中。
+"""
+
+
 def start(bot, update):
     LOG.info("start")
     user = get_tg_user_from_update(update)
     add_action(user, ACTION_BOT_START_BY_USER)
-    update.message.reply_text(u"坚持一个高层的原则绝不动摇！")
+    update.message.reply_text(first_use_text)
 
 
 def forward_message(bot, update, chat_id, from_chat_id, disable_notification, message_id):
