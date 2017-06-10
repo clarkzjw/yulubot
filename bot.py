@@ -65,6 +65,9 @@ def search_by_keyword(bot, update):
             text = update["message"]["text"][offset:]
             target_id = update["message"]["chat"]["id"]
         try:
+            if text == "":
+                update.message.reply_text(u"请输入关键词")
+                return
             results = query_yulu_by_keyword(text)
             add_action(user, ACTION_BOT_QUERY_BY_KEYWORD, comments=text)
             total = len(results)
@@ -77,10 +80,10 @@ def search_by_keyword(bot, update):
                     elif "ingayssHZ" in url:
                         forward_message(bot, update, target_id, "@ingayssHZ", False, url[23:])
             elif total == 0:
-                update.message.reply_text(u"No result")
+                update.message.reply_text(u"找不到对应的语录")
         except Exception as e:
             LOG.error(e.message)
-            update.message.reply_text(u"查询超时")
+            update.message.reply_text(u"错误 {}".format(e.message))
 
 
 def search_by_people(bot, update):
