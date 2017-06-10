@@ -4,7 +4,7 @@
 # @Date:   2017-05-27
 
 from sqlalchemy import create_engine, Column, String, TEXT
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.dialects.mysql import DOUBLE
 from sqlalchemy.ext.declarative import declarative_base
 from contextlib import contextmanager
@@ -38,7 +38,7 @@ Base.metadata.create_all(engine)
 
 @contextmanager
 def sqlalchemy_session():
-    session = sessionmaker(bind=engine, expire_on_commit=False)()
+    session = scoped_session(sessionmaker(bind=engine, expire_on_commit=False))()
     try:
         yield session
         session.commit()
