@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-from models.db import Quote, config
+from models.db import Quote, config, sqlalchemy_session
 
 from models.db import ACTION_BOT_QUERY_BY_KEYWORD, ACTION_BOT_QUERY_BY_PEOPLE
 from models.db import ACTION_BOT_START_BY_USER
@@ -159,14 +159,20 @@ def echo(bot, update):
                 original_user_nickname = original_user["title"]
 
             url = config.CHANNEL_URL + str(message_id)
-            quote = Quote(id=update_id,
-                          fwd_date=forward_date.replace(tzinfo=timezone.utc).timestamp(),
-                          text=text,
-                          ori_user_id=original_user_id,
-                          ori_user_username=original_user_username,
-                          ori_user_nickname=original_user_nickname,
-                          ori_url=url)
-            insert_quote(quote)
+            with sqlalchemy_session() as session:
+                quote = session.query(Quote).filter(
+                    Quote.ori_user_id == original_user_id,
+                    Quote.text == text
+                ).first()
+                if not quote:
+                    quote = Quote(id=update_id,
+                                  fwd_date=forward_date.replace(tzinfo=timezone.utc).timestamp(),
+                                  text=text,
+                                  ori_user_id=original_user_id,
+                                  ori_user_username=original_user_username,
+                                  ori_user_nickname=original_user_nickname,
+                                  ori_url=url)
+                    insert_quote(quote)
 
 
 def error(bot, update, error):
