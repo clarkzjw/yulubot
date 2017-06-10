@@ -64,26 +64,32 @@ def search_by_keyword(bot, update):
         elif message_type == "group":
             text = update["message"]["text"][offset:]
             target_id = update["message"]["chat"]["id"]
-        try:
-            if text == "":
-                update.message.reply_text(u"请输入关键词")
-                return
-            results = query_yulu_by_keyword(text)
-            add_action(user, ACTION_BOT_QUERY_BY_KEYWORD, comments=text)
-            total = len(results)
-            if total > 0:
-                update.message.reply_text(u"共有 %s 条语录，分别是" % total)
-                for result in results:
-                    url = str(result.ori_url)
+        if text == "":
+            update.message.reply_text(u"请输入关键词")
+            return
+        results = query_yulu_by_keyword(text)
+        add_action(user, ACTION_BOT_QUERY_BY_KEYWORD, comments=text)
+        total = len(results)
+        count = 0
+        deleted_quote = []
+        if total > 0:
+            update.message.reply_text(u"共有 %s 条语录，分别是" % total)
+            for result in results:
+                url = str(result.ori_url)
+                try:
                     if "ingayressHZ" in url:
                         forward_message(bot, update, target_id, "@ingayressHZ", False, url[25:])
                     elif "ingayssHZ" in url:
                         forward_message(bot, update, target_id, "@ingayssHZ", False, url[23:])
-            elif total == 0:
-                update.message.reply_text(u"找不到对应的语录")
-        except Exception as e:
-            LOG.error(e.message)
-            update.message.reply_text(u"错误 {}".format(e.message))
+                    count += 1
+                except Exception as e:
+                    deleted_quote.append(u"{}: {}".format(result.ori_user_nickname, result.text))
+            if count < total:
+                update.message.reply_text(u"有 {} 条语录被删了！".format(total - count))
+                for msg in deleted_quote:
+                    update.message.reply_text(msg)
+        elif total == 0:
+            update.message.reply_text(u"找不到对应的语录")
 
 
 def search_by_people(bot, update):
