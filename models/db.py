@@ -4,7 +4,7 @@
 # @Date:   2017-05-27
 
 from sqlalchemy import create_engine, Column, String, TEXT
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.mysql import DOUBLE
 from sqlalchemy.ext.declarative import declarative_base
 from contextlib import contextmanager
@@ -32,13 +32,13 @@ class Config:
         self.MYSQL_URI = os.getenv("MYSQL_URI", "mysql+pymysql://root:root@127.0.0.1:3306/quote_bot")
 
 config = Config()
-engine = create_engine(config.MYSQL_URI, echo=False, encoding="utf8", connect_args={'charset': 'utf8mb4'})
+engine = create_engine(config.MYSQL_URI, echo=False, pool_recycle=3600, encoding="utf8", connect_args={'charset': 'utf8mb4'})
 Base.metadata.create_all(engine)
 
 
 @contextmanager
 def sqlalchemy_session():
-    session = scoped_session(sessionmaker(bind=engine, expire_on_commit=False))()
+    session = sessionmaker(bind=engine, expire_on_commit=False)()
     try:
         yield session
         session.commit()
