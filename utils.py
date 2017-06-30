@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from models.db import sqlalchemy_session, Action, Quote
+from models.db import sqlalchemy_session, Action, Quote, Blacklist
 
 import logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -55,3 +55,13 @@ def query_yulu_by_username(username):
         for yulu in yulus:
             result.append(yulu.ori_url)
     return count, result
+
+
+def check_blacklist(tg_id):
+    with sqlalchemy_session() as session:
+        user = session.query(Blacklist).filter(
+            Blacklist.tg_id == tg_id
+        ).first()
+        if user:
+            return True
+        return False

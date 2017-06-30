@@ -7,7 +7,7 @@ from models.db import Quote, config, sqlalchemy_session
 from models.db import ACTION_BOT_QUERY_BY_KEYWORD, ACTION_BOT_QUERY_BY_PEOPLE
 from models.db import ACTION_BOT_START_BY_USER
 
-from utils import get_tg_user_from_update, add_action
+from utils import get_tg_user_from_update, add_action, check_blacklist
 from utils import query_yulu_by_keyword, query_yulu_by_username, insert_quote
 
 from datetime import timezone
@@ -56,6 +56,10 @@ def search_by_keyword(bot, update):
     is_bot_cmd = update["message"]["entities"][0]["type"]
     target_id = update["message"]["from_user"]["id"]
     message_type = update["message"]["chat"]["type"]
+    if check_blacklist(user[0]):
+        bot.sendMessage(target_id, u"You have been banned")
+        return
+
     if is_bot_cmd == "bot_command":
         text = ""
         offset = update["message"]["entities"][0]["length"] + 1
@@ -99,6 +103,10 @@ def search_by_people(bot, update):
     is_bot_cmd = update["message"]["entities"][0]["type"]
     target_id = update["message"]["from_user"]["id"]
     message_type = update["message"]["chat"]["type"]
+    if check_blacklist(user[0]):
+        bot.sendMessage(target_id, u"You have been banned")
+        return
+
     if is_bot_cmd == "bot_command":
         username = ""
         offset = update["message"]["entities"][0]["length"] + 1

@@ -83,3 +83,13 @@ class Quote(Base):
     ori_user_nickname = Column(String(255), nullable=True)
     ori_url = Column(String(255), nullable=False)
 
+
+class Blacklist(Base):
+
+    __tablename__ = "blacklist"
+
+    id = Column(String(255), primary_key=True, nullable=False, default=lambda: str(uuid4()))
+
+    tg_id = Column(String(255), nullable=True)
+    tg_name = Column(String(255), nullable=True)
+    tg_nickname = Column(String(255), nullable=True)
