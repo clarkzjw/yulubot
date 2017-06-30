@@ -38,6 +38,10 @@ def start(bot, update):
     LOG.info("start")
     user = get_tg_user_from_update(update)
     add_action(user, ACTION_BOT_START_BY_USER)
+    target_id = update["message"]["from_user"]["id"]
+    if check_blacklist(user[0]):
+        bot.sendMessage(target_id, u"You have been banned")
+        return
     update.message.reply_text(first_use_text)
 
 
@@ -58,6 +62,7 @@ def search_by_keyword(bot, update):
     message_type = update["message"]["chat"]["type"]
     if check_blacklist(user[0]):
         bot.sendMessage(target_id, u"You have been banned")
+        add_action(user, ACTION_BOT_QUERY_BY_KEYWORD, comments="banned")
         return
 
     if is_bot_cmd == "bot_command":
@@ -105,6 +110,7 @@ def search_by_people(bot, update):
     message_type = update["message"]["chat"]["type"]
     if check_blacklist(user[0]):
         bot.sendMessage(target_id, u"You have been banned")
+        add_action(user, ACTION_BOT_QUERY_BY_PEOPLE, comments="banned")
         return
 
     if is_bot_cmd == "bot_command":
