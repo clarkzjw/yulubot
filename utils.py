@@ -3,11 +3,6 @@
 
 from models.db import sqlalchemy_session, Action, Quote, Blacklist
 
-import logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
-LOG = logging.getLogger(__name__)
-
 
 def get_tg_user_from_update(update):
     chat = update["message"]["chat"]

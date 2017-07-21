@@ -4,3 +4,4 @@ pycrypto>=2.6.1
 future>=0.15.2
 sqlalchemy
 pymysql
+pymongo

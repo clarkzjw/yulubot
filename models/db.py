@@ -3,20 +3,15 @@
 # @Author: clarkzjw
 # @Date:   2017-05-27
 
-from sqlalchemy import create_engine, Column, String, TEXT
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.dialects.mysql import DOUBLE
-from sqlalchemy.ext.declarative import declarative_base
-from contextlib import contextmanager
-from uuid import uuid4
-
 import os
 import time
-import logging
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
-LOG = logging.getLogger(__name__)
+from contextlib import contextmanager
+from sqlalchemy import create_engine, Column, String, TEXT
+from sqlalchemy.dialects.mysql import DOUBLE
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from uuid import uuid4
 
 Base = declarative_base()
 
