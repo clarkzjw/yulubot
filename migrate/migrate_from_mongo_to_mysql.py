@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from datetime import timezone
+
 from pymongo import MongoClient
 
 from models.db import Quote

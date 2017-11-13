@@ -1,4 +1,4 @@
-# quote-bot
+# yulubot
 
 A Telegram Bot for Managing Quotes
 
