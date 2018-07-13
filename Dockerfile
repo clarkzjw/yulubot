@@ -1,9 +1,5 @@
-FROM python:3.6.0
+FROM python:3.7.0
 LABEL maintainer clarkzjw <clarkzjw@gmail.com>
-
-RUN \
-    apt-get update && \
-    apt-get -y install vim
 
 WORKDIR /usr/src/app
 ENV PYTHONPATH /usr/src/app
