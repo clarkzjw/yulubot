@@ -19,3 +19,5 @@ jobs:
             docker build -t clarkzjw/yulubot:$TAG .
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             docker push clarkzjw/yulubot:$TAG
+            docker tag clarkzjw/yulubot:$TAG clarkzjw/yulubot:latest
+            docker push clarkzjw/yulubot:latest
