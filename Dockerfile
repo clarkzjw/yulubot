@@ -1,4 +1,4 @@
-FROM python:slim
+FROM python:alpine
 LABEL maintainer clarkzjw <clarkzjw@gmail.com>
 
 WORKDIR /usr/src/app
