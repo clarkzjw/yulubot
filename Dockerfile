@@ -1,4 +1,4 @@
-FROM python:alpine
+FROM python:3.7.0
 LABEL maintainer clarkzjw <clarkzjw@gmail.com>
 
 WORKDIR /usr/src/app
@@ -6,9 +6,7 @@ ENV PYTHONPATH /usr/src/app
 
 COPY requirements.txt /usr/src/app/requirements.txt
 
-RUN \
-    pip install python-telegram-bot && \
-    pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
 COPY . /usr/src/app
 
