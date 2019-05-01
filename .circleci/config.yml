@@ -1,9 +1,6 @@
 version: 2
 jobs:
   build:
-    branches:
-      only:
-        - master
     working_directory: /app
     docker:
       - image: docker:17.05.0-ce-git
@@ -21,3 +18,28 @@ jobs:
             docker push clarkzjw/yulubot:$TAG
             docker tag clarkzjw/yulubot:$TAG clarkzjw/yulubot:latest
             docker push clarkzjw/yulubot:latest
+
+  deploy:
+    machine:
+      enabled: true
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "93:26:39:84:a5:b6:d0:72:78:b2:b6:ab:3b:dd:6a:45"
+
+      - run:
+          name: Deploy over SSH
+          command: |
+            ssh $SSH_USER@$SSH_HOST "bash /home/clarkzjw/app/yulubot/deploy.sh"
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master

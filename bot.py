@@ -190,7 +190,7 @@ def echo(bot, update):
 
 
 def error(bot, update, error):
-    LOG.warn('Update "%s" caused error "%s"' % (update, error))
+    LOG.warning('Update "%s" caused error "%s"' % (update, error))
 
 
 def main():
