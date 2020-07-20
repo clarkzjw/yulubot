@@ -10,4 +10,6 @@ RUN pip install -r requirements.txt
 
 COPY . /usr/src/app
 
+EXPOSE 8080
+
 CMD "python3" "/usr/src/app/bot.py"
